@@ -5,9 +5,15 @@ from fastapi import FastAPI
 from app.db.database import engine, Base
 # 2. Обязательно импортируем файл моделей, чтобы Base знал, какие таблицы создавать
 from app.db import models 
+from fastapi.middleware.cors import CORSMiddleware  # <-- Импортируем middleware
 
 # 3. ИМПОРТИРУЕМ НАШ РОУТЕР
 from app.routers import router as auth_router
+
+origins = [
+    "http://localhost:4200",  # Наш Angular фронтенд
+    "http://127.0.0.1:4200",
+]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,6 +26,14 @@ async def lifespan(app: FastAPI):
     # После закрытия сервера: тут будет очистка ресурсов
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,            # Разрешаем наш Angular порт
+    allow_credentials=True,           # Разрешаем передачу кук / авторизационных заголовков
+    allow_methods=["*"],              # Разрешаем все методы (GET, POST, PUT, DELETE)
+    allow_headers=["*"],              # Разрешаем любые заголовки (Content-Type, Authorization и т.д.)
+)
 
 # 4. ПОДКЛЮЧАЕМ РОУТЕР К ПРИЛОЖЕНИЮ
 app.include_router(auth_router)

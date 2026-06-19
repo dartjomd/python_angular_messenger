@@ -276,7 +276,7 @@ async def logout_from_all_devices(
 ):
     # 1. Берем id текущего залогиненного пользователя
     user_id = current_user.id
-
+    #  ставить is_active = False !!!!!
     # 2. Удаляем ИЗ БАЗЫ абсолютно ВСЕ сессии этого пользователя
     # Больше ни одно его устройство (включая текущее) не сможет обновить токен.
     query = delete(UserSession).where(UserSession.user_id == user_id)

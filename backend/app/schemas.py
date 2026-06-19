@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr, Field
 class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="Уникальный никнейм")
     email: EmailStr = Field(..., description="Электронная почта")
-    password: str = Field(..., min_length=6, description="Пароль (минимум 6 символов)")
+    password: str = Field(..., min_length=6, max_length=50, description="Пароль (минимум 6 символов)")
 
 # Что бэкенд вернет в ответ (пароль мы тут, естественно, уже не возвращаем!)
 class UserResponse(BaseModel):
