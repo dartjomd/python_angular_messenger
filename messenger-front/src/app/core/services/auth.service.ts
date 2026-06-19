@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed, Signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 // Описываем, что именно нам вернет бэкенд при успешном входе
@@ -14,14 +14,14 @@ interface AuthResponse {
 export class AuthService {
   // Внедряем HttpClient (инструмент для сетевых запросов)
   private http: HttpClient = inject(HttpClient);
-  
+
   // URL нашего FastAPI бэкенда. Так как у нас WSL, пишем localhost
   private readonly API_URL: string = 'http://localhost:8000/auth';
 
   // Создаем приватный Сигнал. Он проверяет localStorage: если там есть токен,
   // приложение сразу поймет, что пользователь уже залогинен (например, после обновления страницы F5)
   private _accessToken = signal<string | null>(localStorage.getItem('access_token'));
-  
+
   // Публичный вычисляемый сигнал (computed). Если токен есть — true, если null — false.
   // Гварды и страницы будут читать его, чтобы понять, пускать ли пользователя
   public isAuthenticated: Signal<boolean> = computed(() => !!this._accessToken());
@@ -52,8 +52,18 @@ export class AuthService {
    * Оператор tap() позволяет нам «подсмотреть» в успешный ответ бэкенда,
    * сохранить токен и обновить сигнал, не мешая компоненту формы получить этот же ответ.
    */
-  login(credentials: any): Observable<AuthResponse> {
-    const login$ = this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials);
+  login(username: string, password: string): Observable<any> {
+    // 1. ПРЕВРАЩАЕМ ДАННЫЕ В FORM-DATA
+    // OAuth2PasswordRequestForm на бэкенде ждет именно ключи "username" и "password"
+    const body = new HttpParams()
+      .set('username', username)
+      .set('password', password);
+
+    // 2. УКАЗЫВАЕМ ПРАВИЛЬНЫЙ ХЕДЕР
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/x-www-form-urlencoded'
+    });
+    const login$ = this.http.post<AuthResponse>(`${this.API_URL}/login`, body.toString(), { headers });
     return this.handleAuthResponse(login$);
   }
 

@@ -110,7 +110,7 @@ async def get_current_user(
         
     # 2. Ищем пользователя в базе данных
     user = await db.get(User, int(user_id))
-    if user is None or not user.is_active:
+    if user is None:
         raise credentials_exception
 
     # 3. Обновление времени последней активности сессии и глобального статуса пользователя

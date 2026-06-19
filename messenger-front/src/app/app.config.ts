@@ -1,16 +1,14 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core'; // <-- Импортируем Zoneless
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http'; // <-- Импортируем HTTP
-
 import { routes } from './app.routes';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    // Включаем чистый Zoneless! Теперь нам не нужен zone.js
+    provideZonelessChangeDetection(), 
     provideRouter(routes),
-    
-    // Подключаем HTTP-клиент и сразу регистрируем в нем наш интерцептор
     provideHttpClient(
       withInterceptors([authInterceptor])
     )

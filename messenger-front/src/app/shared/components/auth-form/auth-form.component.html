@@ -1,0 +1,54 @@
+<div class="auth-card">
+  <h2>{{ mode() === 'login' ? 'Вход в мессенджер' : 'Регистрация' }}</h2>
+  <p class="subtitle">{{ mode() === 'login' ? 'Рады видеть тебя снова!' : 'Создай аккаунт для общения' }}</p>
+
+  @if (errorMessage()) {
+    <div class="error-banner">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="authForm" (ngSubmit)="onSubmit()">
+    
+    <div class="form-group">
+      <label for="username">Имя пользователя {{ mode() === 'login' ? 'или Email' : '' }}</label>
+      <input id="username" type="text" formControlName="username" placeholder="Введите ваш username"/>
+      @if (authForm.get('username')?.touched) {
+        @if (authForm.get('username')?.hasError('required')) { <span class="error-text">Это поле обязательно</span> }
+        @if (authForm.get('username')?.hasError('minlength')) { <span class="error-text">Минимум 3 символа</span> }
+      }
+    </div>
+
+    @if (mode() === 'register') {
+      <div class="form-group">
+        <label for="email">Электронная почта</label>
+        <input id="email" type="email" formControlName="email" placeholder="example@mail.com"/>
+        @if (authForm.get('email')?.touched) {
+          @if (authForm.get('email')?.hasError('required')) { <span class="error-text">Это поле обязательно</span> }
+          @if (authForm.get('email')?.hasError('email')) { <span class="error-text">Некорректный формат email</span> }
+        }
+      </div>
+    }
+
+    <div class="form-group">
+      <label for="password">Пароль</label>
+      <input id="password" type="password" formControlName="password" placeholder="••••••••"/>
+      @if (authForm.get('password')?.touched) {
+        @if (authForm.get('password')?.hasError('required')) { <span class="error-text">Введите пароль</span> }
+        @if (authForm.get('password')?.hasError('minlength')) { <span class="error-text">Минимум 6 символов</span> }
+      }
+    </div>
+
+    <button type="submit" [disabled]="isLoading()">
+      {{ isLoading() ? 'Подождите...' : (mode() === 'login' ? 'Войти' : 'Зарегистрироваться') }}
+    </button>
+  </form>
+
+  <p class="footer-text">
+    @if (mode() === 'login') {
+      Ещё нет аккаунта? <a routerLink="/register">Зарегистрироваться</a>
+    } @else {
+      Уже есть аккаунт? <a routerLink="/login">Войти</a>
+    }
+  </p>
+</div>
