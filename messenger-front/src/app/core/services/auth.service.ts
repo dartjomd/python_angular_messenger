@@ -15,8 +15,8 @@ export class AuthService {
   // Внедряем HttpClient (инструмент для сетевых запросов)
   private http: HttpClient = inject(HttpClient);
 
-  // URL нашего FastAPI бэкенда. Так как у нас WSL, пишем localhost
-  private readonly API_URL: string = 'http://localhost:8000/auth';
+  // URL нашего FastAPI бэкенда. Для локального прокси используем относительный путь.
+  private readonly API_URL: string = '/auth';
 
   // Создаем приватный Сигнал. Он проверяет localStorage: если там есть токен,
   // приложение сразу поймет, что пользователь уже залогинен (например, после обновления страницы F5)
@@ -73,7 +73,7 @@ export class AuthService {
    * прикрепить к этому запросу нашу HttpOnly куку refresh_token!
    */
   refreshToken(): Observable<AuthResponse> {
-    const refresh$ = this.http.post<AuthResponse>(`${this.API_URL}/refresh`, {}, { withCredentials: true });
+    const refresh$ = this.http.post<AuthResponse>(`${this.API_URL}/refresh`, {});
     return this.handleAuthResponse(refresh$);
   }
 
@@ -83,7 +83,7 @@ export class AuthService {
   logout(): void {
     // Отправляем запрос на бэкенд, чтобы удалить сессию из БД и стереть куку.
     // withCredentials обязателен, чтобы браузер отдал куку refresh_token бэкенду!
-    this.http.post(`${this.API_URL}/logout`, {}, { withCredentials: true }).subscribe({
+    this.http.post(`${this.API_URL}/logout`, {}).subscribe({
       next: () => console.log('Сессия успешно удалена на бэкенде'),
       error: (err) => console.error('Ошибка при удалении сессии:', err)
     });
@@ -96,7 +96,7 @@ export class AuthService {
   logoutAll(): void {
     // Делаем запрос к защищенному эндпоинту. 
     // Интерцептор автоматически прикрепит Bearer токен, а withCredentials отдаст куку
-    this.http.post(`${this.API_URL}/logout-all`, {}, { withCredentials: true }).subscribe({
+    this.http.post(`${this.API_URL}/logout-all`, {}).subscribe({
       next: () => console.log('Все сессии успешно аннулированы в базе данных'),
       error: (err) => console.error('Ошибка при выходе со всех устройств:', err)
     });
@@ -106,3 +106,5 @@ export class AuthService {
     this._accessToken.set(null);
   }
 }
+
+// check with credentials if doesnt work

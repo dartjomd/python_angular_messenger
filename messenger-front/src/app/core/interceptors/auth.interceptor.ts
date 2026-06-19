@@ -9,10 +9,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // 1. Берем текущий access_token из нашего сервиса
   const token = authService.accessToken;
 
-  // 2. Если токен есть в памяти, клонируем запрос и добавляем заголовок Authorization
-  let clonedReq = req;
+  // 2. Всегда включаем credentials; добавляем Authorization только если токен есть
+  let clonedReq = req.clone({ withCredentials: true });
   if (token) {
-    clonedReq = req.clone({
+    clonedReq = clonedReq.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
       }
@@ -40,6 +40,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             // Если рефреш прошел успешно, берем СТАРЫЙ запрос,
             // вшиваем в него уже НОВЫЙ полученный токен и отправляем в сеть заново
             const retryReq = req.clone({
+              withCredentials: true,
               setHeaders: {
                 Authorization: `Bearer ${newTokens.access_token}`
               }

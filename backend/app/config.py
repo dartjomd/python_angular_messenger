@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -7,6 +9,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_DAYS: int
+    # Cookie settings for local dev vs production
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: Literal['lax', 'strict', 'none'] | None = "lax"
 
     model_config = SettingsConfigDict(
         env_file=".env",

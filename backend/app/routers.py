@@ -12,6 +12,7 @@ from app.responses import (
     REFRESH_RESPONSES,
     REGISTRATION_RESPONSES,
 )  # <-- Импортируем словари
+from app.config import settings
 from app.db.database import get_db
 from app.db.models import User, UserSession
 from app.schemas import Token, UserCreate, UserLogin, UserResponse
@@ -25,6 +26,10 @@ from app.security import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+ # Cookie settings from app configuration
+COOKIE_SECURE = settings.COOKIE_SECURE
+COOKIE_SAMESITE = settings.COOKIE_SAMESITE
 
 # --- ПЕРЕИСПОЛЬЗУЕМЫЕ ИСКЛЮЧЕНИЯ ---
 
@@ -143,8 +148,8 @@ async def login(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=30 * 24 * 60 * 60,
     )
 
@@ -187,7 +192,7 @@ async def refresh_tokens(
                     await db.execute(alert_query)
                     await db.commit()
                     
-                    response.delete_cookie("refresh_token", httponly=True, secure=True, samesite="lax")
+                    response.delete_cookie("refresh_token", httponly=True, secure=COOKIE_SECURE, samesite=COOKIE_SAMESITE)
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail="Атака обнаружена! Повторное использование токена. Все сессии сброшены."
@@ -231,8 +236,8 @@ async def refresh_tokens(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=True,
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=30 * 24 * 60 * 60,
     )
 
@@ -260,7 +265,7 @@ async def logout(
     # Метод delete_cookie просто ставит дату протухания куки в прошлое,
     # и браузер моментально её уничтожает.
     response.delete_cookie(
-        key="refresh_token", httponly=True, secure=True, samesite="lax"
+        key="refresh_token", httponly=True, secure=COOKIE_SECURE, samesite=COOKIE_SAMESITE
     )
 
     return {"detail": "Успешный выход из системы"}
@@ -286,7 +291,7 @@ async def logout_from_all_devices(
     # 3. Стираем куку refresh_token на текущем устройстве,
     # чтобы у пользователя сразу очистился браузер
     response.delete_cookie(
-        key="refresh_token", httponly=True, secure=True, samesite="lax"
+        key="refresh_token", httponly=True, secure=COOKIE_SECURE, samesite=COOKIE_SAMESITE
     )
 
     return {"detail": "Успешный выход со всех устройств. Все сессии аннулированы."}

@@ -30,10 +30,10 @@ export const routes: Routes = [
       //   path: 'chats/:id',
       //   loadComponent: () => import('./pages/chat-window/chat-window.component').then(m => m.ChatWindowComponent)
       // },
-      // {
-      //   path: 'profile', // <-- ПОМЕНЯЛИ ЗДЕСЬ
-      //   loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
-      // }
+      {
+        path: 'profile', // <-- ПОМЕНЯЛИ ЗДЕСЬ
+        loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
+      }
     ]
   },
 
