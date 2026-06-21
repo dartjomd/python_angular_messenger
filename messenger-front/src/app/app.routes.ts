@@ -33,6 +33,10 @@ export const routes: Routes = [
       {
         path: 'profile', // <-- ПОМЕНЯЛИ ЗДЕСЬ
         loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      {
+        path: 'search', // <-- ПОМЕНЯЛИ ЗДЕСЬ
+        loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent)
       }
     ]
   },

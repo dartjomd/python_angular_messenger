@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { catchError, of, switchMap, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
@@ -23,7 +23,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(clonedReq).pipe(
     catchError((error: any) => {
       // Нас интересует только ошибка 401 Unauthorized (протухший токен)
-      // И мы проверяем, чтобы это не были запросы логина или рефреша, иначе уйдем в бесконечный цикл
       if (
         error instanceof HttpErrorResponse &&
         error.status === 401 &&
@@ -36,7 +35,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return authService.refreshToken().pipe(
           switchMap((newTokens) => {
             console.log('🔄 Токен успешно обновлен! Повторяю старый запрос.');
-            
+
             // Если рефреш прошел успешно, берем СТАРЫЙ запрос,
             // вшиваем в него уже НОВЫЙ полученный токен и отправляем в сеть заново
             const retryReq = req.clone({
@@ -48,9 +47,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return next(retryReq);
           }),
           catchError((refreshErr) => {
-            // Если упал даже /refresh (например, кука тоже просрочена) — сессия полностью умерла
             console.error('❌ Сессия полностью истекла. Выбрасываем пользователя на вход.');
-            authService.logout(); // Очистит локальные данные и обнулит сигналы
+
+            // ИЗМЕНЕНИЕ ТУТ: Активируем поток логаута через .subscribe()
+            // Он выполнит запрос на бэкенд, а в хуке finalize вызовет clearLocalSession и редиректнет!
+            // authService.logout().subscribe();
+
+            // Гасим ошибку, возвращая пустой поток, чтобы Angular не падал в белый экран
             return throwError(() => refreshErr);
           })
         );

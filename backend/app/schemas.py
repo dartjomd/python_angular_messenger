@@ -29,3 +29,16 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    user: UserResponse
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    token_type: str
+
+class UserSearchResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+
+    class Config:
+        from_attributes = True

@@ -1,7 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service'; // Подправь путь к своему сервису, если он другой
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-profile',
@@ -14,11 +14,33 @@ export class ProfileComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  // Создаем readonly-ссылку на сигнал из сервиса для шаблона
+  // Благодаря этому, если сигнал в сервисе изменится — шаблон перерисуется сам
+  user = this.authService.currentUser;
+
   onLogout() {
-    // 1. Вызываем метод логаута в сервисе (он должен удалить токен из localStorage / сигналов)
-    this.authService.logout(); 
-    
-    // 2. Редиректим на страницу логина
+    this.authService.logout().subscribe({
+      next: () => this.redirectToLogin(),
+      error: () => this.redirectToLogin()
+    });
+  }
+
+  onLogoutAllDevices() {
+    if (confirm('Вы уверены, что хотите завершить все сессии на других устройствах?')) {
+      this.authService.logoutAllDevices().subscribe({
+        next: () => {
+          alert('Все сессии успешно завершены!');
+          this.redirectToLogin();
+        },
+        error: (err) => {
+          alert('Ошибка при завершении сессий');
+          console.error(err);
+        }
+      });
+    }
+  }
+
+  private redirectToLogin() {
     this.router.navigate(['/login']);
   }
 }

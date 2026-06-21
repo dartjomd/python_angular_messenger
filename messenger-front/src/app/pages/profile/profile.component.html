@@ -2,12 +2,17 @@
   <div class="profile-card">
     <div class="avatar-placeholder">👤</div>
     
-    <h2 class="username">Имя Пользователя</h2>
+    <h2 class="username">{{ user()?.username || 'Данные отсутствуют' }}</h2>
+    <p class="email">{{ user()?.email || 'Почта не указана' }}</p>
     <p class="status">В сети</p>
 
     <div class="actions">
       <button class="logout-btn" (click)="onLogout()">
         Выйти из аккаунта 🚪
+      </button>
+
+      <button class="logout-all-btn" (click)="onLogoutAllDevices()">
+        Выйти со всех устройств 📱💻
       </button>
     </div>
   </div>
