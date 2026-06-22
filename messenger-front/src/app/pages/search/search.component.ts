@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { UserService, UserSearchResult } from '../../core/services/user.service';
+import { SearchService, UserSearchResult } from '../../core/services/search.service';
 
 @Component({
   selector: 'app-search',
@@ -14,7 +14,7 @@ import { UserService, UserSearchResult } from '../../core/services/user.service'
   styleUrl: './search.component.scss'
 })
 export class SearchComponent {
-  private userService = inject(UserService);
+  private searchService = inject(SearchService);
 
   // 1. Делаем строку поиска сигналом
   searchQuery = signal<string>('');
@@ -41,7 +41,7 @@ export class SearchComponent {
       }),
       switchMap((query) => {
         if (!query.trim()) return of([]);
-        return this.userService.searchUsers(query).pipe(
+        return this.searchService.searchUsers(query).pipe(
           tap(() => this.isLoading.set(false)), // Выключаем лоадер при успехе
           catchError((err) => {
             console.error('Ошибка при поиске пользователей:', err);

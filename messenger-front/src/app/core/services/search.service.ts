@@ -8,12 +8,11 @@ export interface UserSearchResult extends Omit<UserProfile, 'is_active'> {}
 @Injectable({
   providedIn: 'root'
 })
-export class UserService {
+export class SearchService {
   private http = inject(HttpClient);
-  private readonly API_URL = '/users'; // Прокси перенаправит на http://127.0.0.1:8000/users
 
   searchUsers(query: string): Observable<UserSearchResult[]> {
     const params = new HttpParams().set('query', query);
-    return this.http.get<UserSearchResult[]>(`${this.API_URL}/search`, { params });
+    return this.http.get<UserSearchResult[]>(`/search_users`, { params });
   }
 }

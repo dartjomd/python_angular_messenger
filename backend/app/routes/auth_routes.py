@@ -317,27 +317,3 @@ async def logout_from_all_devices(
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
-
-@router.get("/search", response_model=List[UserSearchResponse])
-async def search_users(
-    query: str = Query(..., min_length=1),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) # Защищаем эндпоинт
-):
-    # Ищем пользователей, у которых username или email похож на запрос,
-    # и исключаем из выдачи текущего залогиненного пользователя
-    stmt = (
-        select(User)
-        .where(
-            or_(
-                User.username.ilike(f"%{query}%"),
-                User.email.ilike(f"%{query}%")
-            )
-        )
-        .where(User.id != current_user.id) 
-        .limit(20) # Ограничим выдачу первыми 20 совпадениями
-    )
-    
-    result = await db.execute(stmt)
-    users = result.scalars().all()
-    return users

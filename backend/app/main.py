@@ -8,7 +8,8 @@ from app.db import models
 from fastapi.middleware.cors import CORSMiddleware  # <-- Импортируем middleware
 
 # 3. ИМПОРТИРУЕМ НАШ РОУТЕР
-from app.routers import router as auth_router
+from app.routes.auth_routes import router as auth_router
+from app.routes.search_routes import router as search_router
 
 origins = [
     "http://localhost:4200",  # Наш Angular фронтенд
@@ -37,6 +38,7 @@ app.add_middleware(
 
 # 4. ПОДКЛЮЧАЕМ РОУТЕР К ПРИЛОЖЕНИЮ
 app.include_router(auth_router)
+app.include_router(search_router)
 
 # Твой тестовый эндпоинт (можно оставить или удалить)
 @app.get("/")
