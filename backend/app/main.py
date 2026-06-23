@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware  # <-- Импортируем
 # 3. ИМПОРТИРУЕМ НАШ РОУТЕР
 from app.routes.auth_routes import router as auth_router
 from app.routes.search_routes import router as search_router
+from app.routes.chats_routes import router as chats_router
 
 origins = [
     "http://localhost:4200",  # Наш Angular фронтенд
@@ -39,6 +40,7 @@ app.add_middleware(
 # 4. ПОДКЛЮЧАЕМ РОУТЕР К ПРИЛОЖЕНИЮ
 app.include_router(auth_router)
 app.include_router(search_router)
+app.include_router(chats_router)
 
 # Твой тестовый эндпоинт (можно оставить или удалить)
 @app.get("/")

@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -9,29 +9,34 @@ from app.db.models import User
 from app.schemas import UserSearchResponse
 from app.security import get_current_user
 
-# Создаем отдельный роутер. 
-# Префикс "/auth" мы НЕ пишем здесь, его лучше указать при include_router в main.py,
-# чтобы эндпоинты этого файла красиво дополняли модуль Auth.
-router = APIRouter(tags=["Search"])
+router = APIRouter(prefix='/search', tags=["Search"])
 
-@router.get("/search_users", response_model=List[UserSearchResponse])
+@router.get("/users", response_model=List[UserSearchResponse])
 async def search_users(
     query: str = Query(..., min_length=1),
+    offset: int = Query(0, ge=0),          
+    limit: int = Query(10, ge=1, le=50),   
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Защищаем эндпоинт авторизацией
+    current_user: User = Depends(get_current_user)
 ):
     stmt = (
         select(User)
         .where(
-            or_(
-                User.username.ilike(f"%{query}%"),
-                User.email.ilike(f"%{query}%")
+            and_(
+                or_(
+                    User.username.ilike(f"%{query}%"),
+                    User.email.ilike(f"%{query}%")
+                ),
+                User.id != current_user.id,
+                User.is_active == True  # Гарантируем, что удаленные аккаунты не попадут в поиск
             )
         )
-        .where(User.id != current_user.id) 
-        .limit(20)  # Ограничиваем выдачу первыми 20 совпадениями
+        .order_by(User.username) 
+        .offset(offset)          
+        .limit(limit)            
     )
     
     result = await db.execute(stmt)
     users = result.scalars().all()
+    
     return users

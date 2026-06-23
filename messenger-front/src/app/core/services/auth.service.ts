@@ -22,7 +22,7 @@ interface AuthResponse {
 export class AuthService {
   private http: HttpClient = inject(HttpClient);
   private router: Router = inject(Router);
-  private readonly API_URL: string = '/auth';
+  private readonly API_URL: string = 'api/auth';
 
   private _accessToken = signal<string | null>(localStorage.getItem('access_token'));
   public isAuthenticated: Signal<boolean> = computed(() => !!this._accessToken());

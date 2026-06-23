@@ -42,3 +42,10 @@ class UserSearchResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ChatCreateResponse(BaseModel):
+    chat_id: int
+    message: str
+
+    class Config:
+        from_attributes = True
