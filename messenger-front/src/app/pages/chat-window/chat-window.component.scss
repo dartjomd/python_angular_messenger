@@ -1,0 +1,205 @@
+// Переменные для быстрой кастомизации цветов
+$primary-color: #5c6bc0;
+$bg-app: #f4f5f7; // Фон вокруг чата, если экран шире 800px
+$bg-chat: #ffffff; // Сам чат сделаем белым или слегка сероватым для контраста
+$bg-incoming: #f1f3f4; // Чуть темнее для контраста на белом фоне
+$bg-outgoing: #e8eaf6;
+$text-main: #333333;
+$text-muted: #888888;
+$border-color: #e0e0e0;
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  
+  // Встраиваемся в твой макет
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto; // Центрируем чат по горизонтали
+  
+  height: 100%; // Высота под твой топ-бар
+  background-color: $bg-chat;
+  color: $text-main;
+  font-family: inherit;
+  
+  // Делаем легкую боковую границу, если вокруг чата будет пустое пространство
+  border-left: 1px solid $border-color;
+  border-right: 1px solid $border-color;
+  box-sizing: border-box;
+}
+
+// Шапка чата
+.chat-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px; // Уменьшаем паддинги, делая шапку уже
+  background-color: transparent; // Убираем белый фон, пусть сливается с общим фоном страницы
+  border-bottom: 1px solid #e9eba4; // Или вообще убрать border-bottom, оставив чистый воздух
+  box-shadow: none;
+
+  .back-btn {
+    margin-right: 8px;
+  }
+
+  .chat-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: $primary-color;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+
+  .user-details {
+    display: flex;
+    flex-direction: column;
+
+    .username {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      
+      &.online {
+        color: #4caf50;
+      }
+    }
+  }
+}
+
+// Зона сообщений
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #fafafa; // Легкий фон для области сообщений, чтобы выделить баблы
+}
+
+// Ряды и баблы сообщений
+.message-row {
+  display: flex;
+  width: 100%;
+
+  &.incoming {
+    justify-content: flex-start;
+    .message-bubble {
+      background-color: $bg-incoming;
+      border-radius: 4px 16px 16px 16px;
+    }
+  }
+
+  &.outgoing {
+    justify-content: flex-end;
+    .message-bubble {
+      background-color: $bg-outgoing;
+      border-radius: 16px 4px 16px 16px;
+    }
+  }
+}
+
+.message-bubble {
+  max-width: 70%; // Чуть увеличили для компактного экрана в 800px
+  padding: 10px 14px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+
+  .message-text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .message-time {
+    font-size: 0.72rem;
+    color: $text-muted;
+    align-self: flex-end;
+  }
+}
+
+// Нижний бар ввода
+.chat-footer {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  background-color: #ffffff;
+  border-top: 1px solid $border-color;
+  gap: 12px;
+
+  .input-wrapper {
+    flex: 1;
+  }
+
+  .message-input {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px solid $border-color;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: $primary-color;
+    }
+  }
+}
+
+// Кнопки-иконки
+.btn-icon {
+  background: none;
+  border: none;
+  color: #65676b;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+
+  &:hover {
+    background-color: #f2f2f2;
+    color: $text-main;
+  }
+}
+
+.btn-send {
+  background-color: $primary-color;
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding-left: 3px; 
+  transition: background-color 0.2s, transform 0.1s;
+  flex-shrink: 0; // Запрещаем кнопке сжиматься
+
+
+  &:active {
+    transform: scale(0.95);
+  }
+}

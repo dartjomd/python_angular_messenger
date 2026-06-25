@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr, Field
 
 # Что мы ждем от пользователя при регистрации
@@ -46,6 +49,28 @@ class UserSearchResponse(BaseModel):
 class ChatCreateResponse(BaseModel):
     chat_id: int
     message: str
+
+    class Config:
+        from_attributes = True
+
+class LogoutResponse(BaseModel):
+    detail: str
+
+class ChatListElementResponse(BaseModel):
+    id: int
+    chat_type: str
+    
+    # Данные собеседника (для DIRECT чатов)
+    recipient_id: Optional[int] = None
+    username: str
+    avatar_letter: str
+    
+    # Заглушки на будущее (сейчас сделаем дефолтные значения)
+    is_online: bool = False
+    last_seen: Optional[str] = None
+    last_message: Optional[str] = None
+    last_message_time: Optional[datetime] = None
+    unread_count: int = 0
 
     class Config:
         from_attributes = True

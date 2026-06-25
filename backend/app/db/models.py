@@ -12,7 +12,7 @@ from sqlalchemy import (
     Enum,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 from sqlalchemy.sql import func
 
@@ -58,6 +58,9 @@ class User(Base):
         onupdate=func.now(),  # База будет сама обновлять время при любом апдейте юзера
     )
 
+    chat_members = relationship("ChatMember", back_populates="user")
+
+
 class UserSession(Base):
     __tablename__ = "user_sessions"
 
@@ -100,6 +103,8 @@ class Chat(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    members = relationship("ChatMember", back_populates="chat", lazy="selectin")
+
 
 # ==========================================
 # 3. УЧАСТНИКИ ЧАТОВ
@@ -117,6 +122,9 @@ class ChatMember(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+    chat = relationship("Chat", back_populates="members")
+    user = relationship("User", back_populates="chat_members", lazy="selectin")
 
     __table_args__ = (UniqueConstraint("user_id", "chat_id", name="uq_user_chat"),)
 

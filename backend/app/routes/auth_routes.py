@@ -16,7 +16,7 @@ from app.responses import (
 from app.config import settings
 from app.db.database import get_db
 from app.db.models import User, UserSession
-from app.schemas import RefreshResponse, Token, UserCreate, UserLogin, UserResponse, UserSearchResponse
+from app.schemas import LogoutResponse, RefreshResponse, Token, UserCreate, UserLogin, UserResponse, UserSearchResponse
 from app.security import (
     create_access_token,
     decode_refresh_token,
@@ -256,7 +256,7 @@ async def refresh_tokens(
     return {"access_token": new_access_token, "token_type": "bearer"}
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=LogoutResponse)
 async def logout(
     request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ):
@@ -286,7 +286,7 @@ async def logout(
     return {"detail": "Успешный выход из системы"}
 
 
-@router.post("/logout-all")
+@router.post("/logout-all", response_model=LogoutResponse)
 async def logout_from_all_devices(
     response: Response,
     current_user: User = Depends(

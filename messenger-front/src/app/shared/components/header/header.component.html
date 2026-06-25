@@ -1,10 +1,35 @@
 <header class="main-header">
-  <div class="logo" routerLink="/chats">
-    💬 <span class="logo-text">Мессенджер</span>
-  </div>
+  <div class="content">
+    @if (headerService.chatState(); as chat) {
+    <div class="header-chat-mode">
+      <button class="btn-back" (click)="goBack()" title="Назад">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
+      
+      <div class="chat-user-info">
+        <div class="avatar-circle">{{ chat.avatarLetter }}</div>
+        <div class="user-meta">
+          <span class="chat-username">{{ chat.username }}</span>
+          <span class="chat-status" [class.online]="chat.isOnline">
+            @if (chat.isOnline) {
+              в сети
+            } @else {
+              {{ chat.lastSeen ? 'был(а) ' + chat.lastSeen : 'офлайн' }}
+            }
+          </span>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="logo" routerLink="/chats">
+      💬 <span class="logo-text">Мессенджер</span>
+    </div>
 
-  <nav class="nav-links">
-    <a routerLink="/chats" routerLinkActive="active" class="nav-btn" title="Чаты">💬</a>
-    <a routerLink="/profile" routerLinkActive="active" class="nav-btn" title="Профиль">👤</a>
-  </nav>
+    <nav class="nav-links">
+      <a routerLink="/search-users" routerLinkActive="active" class="nav-btn" title="Поиск">💬</a>
+      <a routerLink="/chats" routerLinkActive="active" class="nav-btn" title="Чаты">ЧАТЫ</a>
+      <a routerLink="/profile" routerLinkActive="active" class="nav-btn" title="Профиль">👤</a>
+    </nav>
+  }
+  </div>
 </header>
