@@ -6,16 +6,19 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, scan } 
 import { of, combineLatest } from 'rxjs';
 import { SearchService, UserSearchResult } from '../../core/services/search.service';
 import { Router } from '@angular/router';
+import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
+import { ChatsService } from '../../core/services/chats.service';
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AvatarComponent],
   templateUrl: './search-users.component.html',
   styleUrl: './search-users.component.scss'
 })
 export class SearchUsersComponent implements AfterViewInit, OnDestroy {
   private searchService = inject(SearchService);
+  private chatsService = inject(ChatsService)
   private router = inject(Router)
 
   // Ссылка на невидимый элемент внизу страницы (якорь для скролла)
@@ -114,7 +117,7 @@ export class SearchUsersComponent implements AfterViewInit, OnDestroy {
 
   onWriteMessage(user: UserSearchResult): void {
     // 1. Отправляем запрос на бэкенд
-    this.searchService.createOrGetDialog(user.id).subscribe({
+    this.chatsService.createOrGetDialog(user.id).subscribe({
       next: (response) => {
         console.log(`Успешно! ${response.message}. ID чата: ${response.chat_id}`);
 

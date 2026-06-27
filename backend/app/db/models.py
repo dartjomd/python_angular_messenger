@@ -155,7 +155,7 @@ class Message(Base):
         DateTime(timezone=True), server_default=func.now(), index=True
     )
 
-    reply_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("messages.id", on_delete="SET NULL"), nullable=True, index=True)
+    reply_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("messages.id", ondelete="SET NULL"), nullable=True, index=True)
 
 
 # ==========================================

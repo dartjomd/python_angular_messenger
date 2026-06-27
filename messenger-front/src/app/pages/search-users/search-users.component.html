@@ -15,9 +15,9 @@
     @for (user of usersList(); track user.id) {
     <div class="user-card">
       <div class="user-info">
-        <div class="avatar-placeholder">
-          {{ user.username.substring(0, 2).toUpperCase() }}
-        </div>
+        <app-avatar [avatarText]="user.avatar_letter.toUpperCase()" [isOnline]="false"
+          [isGroup]="false">
+        </app-avatar>
         <div class="user-details">
           <span class="username">{{ user.username }}</span>
           <span class="email">{{ user.email }}</span>
@@ -32,7 +32,7 @@
   }
 
   @if (!isLoading() && hasSearched() && usersList().length === 0 && searchQuery().trim()) {
-    <div class="no-results">Пользователи с таким именем не найдены 😟</div>
+    <div class="no-results">Пользователи с таким именем не найдены</div>
     }
 
   @if (isLoading() && usersList().length > 0) {

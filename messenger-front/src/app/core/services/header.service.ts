@@ -4,6 +4,7 @@ export interface HeaderChatState {
   username: string;
   avatarLetter: string;
   isOnline: boolean;
+  isGroup: boolean;
   lastSeen?: string; // Время последней активности (опционально)
 }
 

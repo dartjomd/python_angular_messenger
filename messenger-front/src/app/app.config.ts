@@ -4,7 +4,8 @@ import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
-import { catchError, of } from 'rxjs';
+import { catchError, of, tap } from 'rxjs';
+import { WsManagerService } from './core/services/ws/ws-manager.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,10 +19,15 @@ export const appConfig: ApplicationConfig = {
     // Используем современную функцию инициализации:
     provideAppInitializer(() => {
       const authService = inject(AuthService); // Внедряем сервис прямо внутрь функции
+      const wsManager = inject(WsManagerService);
 
       // Логика осталась железно той же:
       if (authService.accessToken) {
         return authService.getMe().pipe(
+          tap(() => {
+            console.log('Сессия восстановлена, запускаем WebSocket...');
+            wsManager.connect(); // <-- Включаем сокет, токен железно валидный!
+          }),
           catchError((err) => {
             console.error('Ошибка автоматического восстановления сессии:', err);
             authService.logout().subscribe(); // Чистим фронтенд, если токен сдох

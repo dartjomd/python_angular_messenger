@@ -1,18 +1,19 @@
 <div class="profile-page">
   <div class="profile-card">
-    <div class="avatar-placeholder">👤</div>
-    
+    <app-avatar [avatarText]="user()?.username?.[0]?.toUpperCase() || '?'" [isOnline]="true"
+      [isGroup]="false">
+    </app-avatar>
+
     <h2 class="username">{{ user()?.username || 'Данные отсутствуют' }}</h2>
     <p class="email">{{ user()?.email || 'Почта не указана' }}</p>
-    <p class="status">В сети</p>
 
     <div class="actions">
       <button class="logout-btn" (click)="onLogout()">
-        Выйти из аккаунта 🚪
+        Выйти из аккаунтa
       </button>
 
       <button class="logout-all-btn" (click)="onLogoutAllDevices()">
-        Выйти со всех устройств 📱💻
+        Выйти со всех устройств
       </button>
     </div>
   </div>

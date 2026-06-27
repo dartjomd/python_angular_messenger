@@ -1,11 +1,14 @@
 import { Injectable, inject, signal, computed, Signal } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router'; // <-- ДОБАВИЛИ ИМПОРТ
-import { Observable, tap, of } from 'rxjs';
+import { Observable, tap, of, finalize, Subject } from 'rxjs';
+import { WsChatService } from './ws/ws-chat.service';
+import { WsManagerService } from './ws/ws-manager.service';
 
 export interface UserProfile {
   id: number;
   username: string;
+  avatar_letter: string;
   email: string;
   is_active: boolean;
 }
@@ -23,6 +26,10 @@ export class AuthService {
   private http: HttpClient = inject(HttpClient);
   private router: Router = inject(Router);
   private readonly API_URL: string = 'api/auth';
+  private wsManager = inject(WsManagerService)
+
+  private logoutSource$ = new Subject<void>();
+  public logout$ = this.logoutSource$.asObservable();
 
   private _accessToken = signal<string | null>(localStorage.getItem('access_token'));
   public isAuthenticated: Signal<boolean> = computed(() => !!this._accessToken());
@@ -40,7 +47,7 @@ export class AuthService {
         if (response && response.access_token) {
           localStorage.setItem('access_token', response.access_token);
           this._accessToken.set(response.access_token);
-          
+
           if (response.user) {
             this._currentUser.set(response.user);
           }
@@ -79,25 +86,24 @@ export class AuthService {
     return this.handleAuthResponse(refresh$);
   }
 
+  private executeLocalLogout(): void {
+    this.wsManager.disconnect();
+    this.logoutSource$.next();
+    this.clearLocalSession();
+    this.redirectToLogin();
+    console.log('logoudttt');
+    
+  }
+
   logout(): Observable<any> {
     return this.http.post(`${this.API_URL}/logout`, {}).pipe(
-      tap({
-        finalize: () => {
-          this.clearLocalSession();
-          this.redirectToLogin();
-        }
-      })
+      finalize(() => this.executeLocalLogout())
     );
   }
 
   logoutAllDevices(): Observable<any> {
     return this.http.post(`${this.API_URL}/logout-all`, {}).pipe(
-      tap({
-        finalize: () => {
-          this.clearLocalSession();
-          this.redirectToLogin();
-        }
-      })
+      finalize(() => this.executeLocalLogout())
     );
   }
 

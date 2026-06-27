@@ -1,12 +1,13 @@
 import { Component, input } from '@angular/core';
 
 @Component({
-  selector: 'app-user-logo.component',
+  selector: 'app-avatar',
   imports: [],
   templateUrl: './avatar.component.html',
   styleUrl: './avatar.component.scss',
 })
 export class AvatarComponent {
-  protected avatarText = input<string>('')
-  protected isOnline = input<boolean>(false)
+  avatarText = input<string>('')
+  isOnline = input<boolean>(false)
+  isGroup = input<boolean>(false)
 }

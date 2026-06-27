@@ -18,7 +18,7 @@ async def search_users(
     limit: int = Query(10, ge=1, le=50),   
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):
+) -> List[UserSearchResponse]:
     stmt = (
         select(User)
         .where(
@@ -39,4 +39,20 @@ async def search_users(
     result = await db.execute(stmt)
     users = result.scalars().all()
     
-    return users
+    response_users = []
+    
+    # Проходимся циклом по найденным пользователям
+    for user in users:
+        # Генерируем букву для аватарки
+        avatar_letter = user.username.strip()[0].upper() if user.username else "?"
+        
+        # Собираем схему ответа вручную, подкидывая новое поле
+        response_users.append(
+            UserSearchResponse(
+                id=user.id,
+                username=user.username,
+                email=user.email,
+            )
+        )
+    
+    return response_users

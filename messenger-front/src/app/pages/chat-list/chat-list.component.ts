@@ -2,11 +2,12 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChatListElement, ChatsService } from '../../core/services/chats.service';
 import { Router } from '@angular/router';
+import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
 
 @Component({
   selector: 'app-chat-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AvatarComponent],
   templateUrl: './chat-list.component.html',
   styleUrl: './chat-list.component.scss'
 })

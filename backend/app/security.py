@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.db.database import get_db
+from app.db.database import AsyncSessionLocal, get_db
 from app.db.models import User, UserSession
 
 # Схема авторизации
@@ -133,3 +133,30 @@ async def get_current_user(
                 await db.commit()
 
     return user
+
+async def get_current_user_ws(
+    token: str | None = Query(None)
+) -> User | None:
+    if not token:
+       return
+
+    try:
+        payload = jwt.decode(
+            token, 
+            settings.JWT_SECRET_KEY, 
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+        
+        if payload.get("type") != "access":
+            return None
+            
+        user_id: str | None = payload.get("sub")
+        if user_id is None:
+            return None
+            
+    except JWTError:
+        return None
+    
+    async with AsyncSessionLocal() as db:
+        user = await db.get(User, int(user_id))
+        return user

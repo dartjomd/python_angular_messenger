@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthFormComponent } from '../../shared/components/auth-form/auth-form.component';
+import { WsManagerService } from '../../core/services/ws/ws-manager.service';
 
 @Component({
   selector: 'app-login',
@@ -21,6 +22,7 @@ import { AuthFormComponent } from '../../shared/components/auth-form/auth-form.c
 })
 export class LoginComponent {
   private authService = inject(AuthService);
+  private wsService = inject(WsManagerService)
   private router = inject(Router);
 
   errorMessage = signal<string | null>(null);
@@ -33,6 +35,7 @@ export class LoginComponent {
     this.authService.login(formData.username, formData.password).subscribe({
       next: () => {
         this.isLoading.set(false);
+        this.wsService.connect();
         this.router.navigate(['/chats']);
       },
       error: (err) => {
