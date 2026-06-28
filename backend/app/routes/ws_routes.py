@@ -5,9 +5,8 @@ from sqlalchemy import select
 from app.db.database import AsyncSessionLocal, get_db
 from app.db.models import ChatMember, Message, User
 from app.security import get_current_user, get_current_user_ws
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.chats.ws_manager import manager
-from app.schemas import WsMessageDataSchema, WsMessageEventResponse
+from app.schemas import WsMessageData, WsMessageEventResponse
 
 
 
@@ -67,7 +66,7 @@ async def handle_chat_message(
                 chat_members_result = await db.execute(chat_members_stmp)
                 chat_members = list(chat_members_result.scalars().all())
 
-            message_data = WsMessageDataSchema(
+            message_data = WsMessageData(
                 id=new_message.id,
                 chat_id=new_message.chat_id,
                 text=new_message.message,

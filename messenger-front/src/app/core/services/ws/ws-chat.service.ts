@@ -8,7 +8,7 @@ import { AuthService } from "../auth.service";
 @Injectable({
     providedIn: 'root'
 })
-export class WsChatService {
+export class WsChatsService {
     private wsService = inject(WsManagerService);
     private chatsService = inject(ChatsService);
     private authService = inject(AuthService)
@@ -30,7 +30,9 @@ export class WsChatService {
 
         // Передаем chatId, который нам прокинул компонент
         this.chatsService.getChatMessage(chatId, 0, 50).subscribe({
-            next: (history) => this.messageList.set(history),
+            next: (history) => {
+                this.messageList.set(history)
+            },
             error: (err) => console.error('Ошибка при получении истории сообщений: ', err)
         });
     }
@@ -38,19 +40,10 @@ export class WsChatService {
     public constructor() {
         this.wsService.ws_stream$.pipe(
             filter((event: WsEvent) => event && event.type === 'message' && event.data.chat_id === this.activeChatId),
-            map((event: WsEvent) => {
-                if (event.type === 'message') return event.data
-                throw new Error('Unexpected event type')
-            })
+            map((event: WsEvent) => event.data as WsMessageData)
         ).subscribe({
             next: (msg: WsMessageData) => {
-                const newMessage: WsMessageData = {
-                    chat_id: msg.chat_id,
-                    text: msg.text,
-                    sender_id: msg.sender_id
-                };
-                
-                this.messageList.update(currentList => [...currentList, newMessage]);
+                this.messageList.update(currentList => [...currentList, msg]);
             }
         });
 
@@ -73,5 +66,16 @@ export class WsChatService {
     public clearState(): void {
         this.messageList.set([]); 
         this.activeChatId = null; 
+    }
+
+    showDateSeparator(currentMsg: WsMessageData, previousMsg?: WsMessageData): boolean {
+        if (!previousMsg) {
+            return true;
+        }
+
+        const currentDate = new Date(currentMsg.created_at).toDateString();
+        const previousDate = new Date(previousMsg.created_at).toDateString();
+        
+        return currentDate !== previousDate;
     }
 }

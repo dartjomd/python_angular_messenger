@@ -203,3 +203,33 @@ $border-color: #e0e0e0;
     transform: scale(0.95);
   }
 }
+
+/* Контейнер для разделителя дат */
+.date-separator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0; /* Отступы сверху и снизу от сообщений */
+  position: relative;
+  user-select: none; /* Чтобы дата не выделялась случайно при копировании текста */
+}
+
+/* Сама плашка с текстом */
+.date-separator span {
+  background-color: rgba(0, 0, 0, 0.08); /* Легкий темный фон, адаптирующийся под светлую тему */
+  color: #65676b; /* Спокойный серый цвет текста */
+  font-size: 0.8rem; /* Чуть меньше основного текста сообщений */
+  font-weight: 500; /* Полужирный для лучшей читаемости */
+  padding: 4px 12px; /* Внутренние отступы */
+  border-radius: 12px; /* Округлые края */
+  text-transform: lowercase; /* Сделает месяц с маленькой буквы (например: 27 июня 2026) */
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05); /* Едва заметная тень для объема */
+}
+
+/* Опционально: если у тебя темная тема приложения, используй этот селектор: */
+@media (prefers-color-scheme: dark) {
+  .date-separator span {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #b0b3b8;
+  }
+}

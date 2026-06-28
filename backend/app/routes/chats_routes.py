@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db  # Твой асинхронный get_db
 from app.security import get_current_user  # Твоя зависимость юзера
 from app.db.models import Chat, ChatMember, ChatType, Message, User
-from app.schemas import ChatCreateResponse, ChatListElementResponse, WsMessageDataSchema, WsMessageEventResponse
+from app.schemas import ChatCreateResponse, ChatListElementResponse, ChatMetadataResponse, CompanionMetadataSchema, WsMessageData, WsMessageEventResponse
 
 router = APIRouter(prefix="/chats", tags=["Chats"])
 
@@ -151,14 +151,14 @@ async def get_or_create_dialog(
     return ChatCreateResponse(chat_id=new_chat.id, message="Новый чат успешно создан")
 
 
-@router.get("/dialog", response_model=List[WsMessageEventResponse])
+@router.get("/dialog", response_model=List[WsMessageData])
 async def get_chat_messages(
     chat_id: int = Query(...),
     offset: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
-) -> List[WsMessageEventResponse]:
+) -> List[WsMessageData]:
     
     participant_stmt = select(ChatMember).where(
         and_(
@@ -183,20 +183,58 @@ async def get_chat_messages(
     
     messages_reversed = list(messages)[::-1]
     
-    response_events = []
+    response_messages: list[WsMessageData] = []
     for msg in messages_reversed:
-        message_data = WsMessageDataSchema(
+        message_data = WsMessageData(
             id=msg.id,
             chat_id=msg.chat_id,
             sender_id=msg.user_id,
             text=msg.message,
             created_at=msg.created_at
         )
-        response_events.append(
-            WsMessageEventResponse(
-                type="message",
-                data=message_data
-            )
+        response_messages.append(
+            message_data
         )
         
-    return response_events
+    return response_messages
+
+@router.get("/metadata", response_model=ChatMetadataResponse)
+async def get_chat_metadata(
+    chat_id: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 1. Получаем сам чат
+    chat = await db.get(Chat, chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Чат не найден")
+
+    # 2. Проверяем, что текущий юзер состоит в этом чате
+    # (твоя стандартная проверка через ChatMember)
+    
+    if chat.chat_type == ChatType.DIRECT:
+        # Ищем ВТОРОГО участника чата (собеседника)
+        companion_stmt = select(User).join(ChatMember).where(
+            ChatMember.chat_id == chat_id,
+            ChatMember.user_id != current_user.id # Не текущий пользователь
+        )
+        companion_result = await db.execute(companion_stmt)
+        companion = companion_result.scalar_one_or_none()
+        
+        if not companion:
+            raise HTTPException(status_code=404, detail="Собеседник не найден")
+
+        # Собираем данные собеседника
+        direct_data = CompanionMetadataSchema(
+            id=companion.id,
+            username=companion.username,
+            is_online=companion.is_active, # или твоя логика онлайна
+            last_seen=companion.last_seen
+        )
+
+        return ChatMetadataResponse(
+            chat_id=chat.id,
+            chat_type=ChatType.DIRECT,
+            title=companion.username, # В шапке личного чата пишем имя юзера
+            direct_info=direct_data
+        )

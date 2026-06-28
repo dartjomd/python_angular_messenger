@@ -11,13 +11,19 @@
       <div class="chat-user-info">
         <app-avatar [avatarText]="chat.avatarLetter" [isOnline]="chat.isOnline" [isGroup]="chat.isGroup">
         </app-avatar>
+
         <div class="user-meta">
           <span class="chat-username">{{ chat.username }}</span>
+
           <span class="chat-status" [class.online]="chat.isOnline">
+            @if (chat.isGroup) {
+            группа
+            } @else {
             @if (chat.isOnline) {
             в сети
             } @else {
-            {{ chat.lastSeen ? 'был(а) ' + chat.lastSeen : 'офлайн' }}
+            {{ chat.lastSeen ? 'был(а) в ' + chat.lastSeen : 'офлайн' }}
+            }
             }
           </span>
         </div>

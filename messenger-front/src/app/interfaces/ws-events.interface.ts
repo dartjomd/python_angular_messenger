@@ -1,8 +1,10 @@
 // 1. Специфичные данные для каждого типа события
 export interface WsMessageData {
-  chat_id: number;
-  text: string;
-  sender_id: number;
+    id: number;          // Добавили
+    chat_id: number;
+    text: string;
+    sender_id: number | null;
+    created_at: string;  // Добавили (прилетает как ISO-строка даты)
 }
 
 export interface WsNotificationData {

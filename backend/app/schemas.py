@@ -1,7 +1,10 @@
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, computed_field
+
+from app.db.models import ChatType
 
 # Что мы ждем от пользователя при регистрации
 class UserCreate(BaseModel):
@@ -89,7 +92,7 @@ class ChatListElementResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class WsMessageDataSchema(BaseModel):
+class WsMessageData(BaseModel):
     id: int  # Полезно для трекинга и ключей в цикле trackBy / @for
     chat_id: int
     text: str
@@ -102,4 +105,42 @@ class WsMessageDataSchema(BaseModel):
 # 2. Единый конверт ответа (соответствует WsEvent при type='message')
 class WsMessageEventResponse(BaseModel):
     type: str = "message"  # Наш дискриминант
-    data: WsMessageDataSchema
+    data: WsMessageData
+
+
+# Схема информации о собеседнике (для DIRECT чатов)
+class CompanionMetadataSchema(BaseModel):
+    id: int
+    username: str
+    is_online: bool
+    last_seen: Optional[datetime]
+
+    # Автоматически вычисляем букву аватара на основе username собеседника
+    @computed_field
+    @property
+    def avatar_letter(self) -> str:
+        return self.username[0].upper() if self.username else "?"
+
+    class Config:
+        from_attributes = True
+
+# Схема информации о группе (для GROUP чатов)
+class GroupMetadataSchema(BaseModel):
+    members_count: int
+    online_count: int
+
+# Единая схема ответа метаданных чата для фронтенда
+class ChatMetadataResponse(BaseModel):
+    chat_id: int
+    chat_type: ChatType
+    title: str  # Имя собеседника или Название группы
+    
+    # Специфичные блоки данных (зависит от типа чата)
+    direct_info: Optional[CompanionMetadataSchema] = None
+    group_info: Optional[GroupMetadataSchema] = None
+
+    # На уровне всей схемы тоже можно вытащить avatar_letter для группы (по первой букве названия группы)
+    @computed_field
+    @property
+    def avatar_letter(self) -> str:
+        return self.title[0].upper() if self.title else "?"

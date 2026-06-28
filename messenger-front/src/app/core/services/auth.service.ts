@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed, Signal } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router'; // <-- ДОБАВИЛИ ИМПОРТ
 import { Observable, tap, of, finalize, Subject } from 'rxjs';
-import { WsChatService } from './ws/ws-chat.service';
+import { WsChatsService } from './ws/ws-chat.service';
 import { WsManagerService } from './ws/ws-manager.service';
 
 export interface UserProfile {

@@ -65,7 +65,7 @@ class UserSession(Base):
     __tablename__ = "user_sessions"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", on_delete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Сам refresh-токен (хэшировать не обязательно, но это уникальная строка)
     refresh_token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False)
