@@ -26,14 +26,18 @@ export const routes: Routes = [
         path: 'chats',
         loadComponent: () => import('./pages/chat-list/chat-list.component').then(m => m.ChatListComponent)
       },
-      // {
-      //   path: 'chats/:id',
-      //   loadComponent: () => import('./pages/chat-window/chat-window.component').then(m => m.ChatWindowComponent)
-      // },
-      // {
-      //   path: 'profile', // <-- ПОМЕНЯЛИ ЗДЕСЬ
-      //   loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
-      // }
+      {
+        path: 'chats/:id',
+        loadComponent: () => import('./pages/chat-window/chat-window.component').then(m => m.ChatWindowComponent)
+      },
+      {
+        path: 'profile', // <-- ПОМЕНЯЛИ ЗДЕСЬ
+        loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      {
+        path: 'search-users', // <-- ПОМЕНЯЛИ ЗДЕСЬ
+        loadComponent: () => import('./pages/search-users/search-users.component').then(m => m.SearchUsersComponent)
+      }
     ]
   },
 

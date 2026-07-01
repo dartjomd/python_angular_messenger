@@ -1,0 +1,9 @@
+<div class="avatar-container">
+    <div class="avatar" [class.group-avatar]="isGroup()">
+        {{ avatarText() }}
+
+        @if (isOnline()) {
+        <span class="online-badge"></span>
+        }
+    </div>
+</div>

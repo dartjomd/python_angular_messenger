@@ -1,0 +1,43 @@
+<div class="search-container">
+  <h2>Поиск собеседников</h2>
+
+  <div class="search-box">
+    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+      placeholder="Введите никнейм или email..." class="search-input" />
+  </div>
+
+  @if (isLoading() && usersList().length === 0) {
+  <div class="loader-global"></div>
+  }
+
+  @if (usersList().length > 0) {
+  <div class="results-list">
+    @for (user of usersList(); track user.id) {
+    <div class="user-card">
+      <div class="user-info">
+        <app-avatar [avatarText]="user.avatar_letter.toUpperCase()" [isOnline]="false"
+          [isGroup]="false">
+        </app-avatar>
+        <div class="user-details">
+          <span class="username">{{ user.username }}</span>
+          <span class="email">{{ user.email }}</span>
+        </div>
+      </div>
+      <button class="write-btn" (click)="onWriteMessage(user)">
+        Написать
+      </button>
+    </div>
+    }
+  </div>
+  }
+
+  @if (!isLoading() && hasSearched() && usersList().length === 0 && searchQuery().trim()) {
+    <div class="no-results">Пользователи с таким именем не найдены</div>
+    }
+
+  @if (isLoading() && usersList().length > 0) {
+  <div class="loader-bottom"></div>
+  }
+
+  <div #scrollAnchor class="scroll-anchor"></div>
+</div>

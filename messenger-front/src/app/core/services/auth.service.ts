@@ -1,32 +1,42 @@
 import { Injectable, inject, signal, computed, Signal } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Router } from '@angular/router'; // <-- ДОБАВИЛИ ИМПОРТ
+import { Observable, tap, of, finalize, Subject } from 'rxjs';
+import { WsChatsService } from './ws/ws-chat.service';
+import { WsManagerService } from './ws/ws-manager.service';
 
-// Описываем, что именно нам вернет бэкенд при успешном входе
+export interface UserProfile {
+  id: number;
+  username: string;
+  avatar_letter: string;
+  email: string;
+  is_active: boolean;
+}
+
 interface AuthResponse {
   access_token: string;
   token_type: string;
+  user: UserProfile;
 }
 
 @Injectable({
-  providedIn: 'root' // Сервис будет один на всё приложение
+  providedIn: 'root'
 })
 export class AuthService {
-  // Внедряем HttpClient (инструмент для сетевых запросов)
   private http: HttpClient = inject(HttpClient);
+  private router: Router = inject(Router);
+  private readonly API_URL: string = 'api/auth';
+  private wsManager = inject(WsManagerService)
 
-  // URL нашего FastAPI бэкенда. Так как у нас WSL, пишем localhost
-  private readonly API_URL: string = 'http://localhost:8000/auth';
+  private logoutSource$ = new Subject<void>();
+  public logout$ = this.logoutSource$.asObservable();
 
-  // Создаем приватный Сигнал. Он проверяет localStorage: если там есть токен,
-  // приложение сразу поймет, что пользователь уже залогинен (например, после обновления страницы F5)
   private _accessToken = signal<string | null>(localStorage.getItem('access_token'));
-
-  // Публичный вычисляемый сигнал (computed). Если токен есть — true, если null — false.
-  // Гварды и страницы будут читать его, чтобы понять, пускать ли пользователя
   public isAuthenticated: Signal<boolean> = computed(() => !!this._accessToken());
 
-  // Простой геттер, чтобы интерцептор мог в любой момент удобно взять строку токена
+  private _currentUser = signal<UserProfile | null>(null);
+  public currentUser = this._currentUser.asReadonly();
+
   public get accessToken(): string | null {
     return this._accessToken();
   }
@@ -34,75 +44,79 @@ export class AuthService {
   private handleAuthResponse(source$: Observable<AuthResponse>): Observable<AuthResponse> {
     return source$.pipe(
       tap((response) => {
-        localStorage.setItem('access_token', response.access_token);
-        this._accessToken.set(response.access_token);
+        if (response && response.access_token) {
+          localStorage.setItem('access_token', response.access_token);
+          this._accessToken.set(response.access_token);
+
+          if (response.user) {
+            this._currentUser.set(response.user);
+          }
+        }
       })
     );
   }
 
-  /**
-   * 1. Регистрация
-   */
   register(userData: any): Observable<any> {
     return this.http.post(`${this.API_URL}/register`, userData);
   }
 
-  /**
-   * 2. Логин
-   * Оператор tap() позволяет нам «подсмотреть» в успешный ответ бэкенда,
-   * сохранить токен и обновить сигнал, не мешая компоненту формы получить этот же ответ.
-   */
-  login(username: string, password: string): Observable<any> {
-    // 1. ПРЕВРАЩАЕМ ДАННЫЕ В FORM-DATA
-    // OAuth2PasswordRequestForm на бэкенде ждет именно ключи "username" и "password"
+  login(username: string, password: string): Observable<AuthResponse> {
     const body = new HttpParams()
       .set('username', username)
       .set('password', password);
 
-    // 2. УКАЗЫВАЕМ ПРАВИЛЬНЫЙ ХЕДЕР
     const headers = new HttpHeaders({
       'Content-Type': 'application/x-www-form-urlencoded'
     });
+
     const login$ = this.http.post<AuthResponse>(`${this.API_URL}/login`, body.toString(), { headers });
     return this.handleAuthResponse(login$);
   }
 
-  /**
-   * 3. Обновление токена (Refresh)
-   * 🚨 КРИТИЧЕСКИ ВАЖНО: { withCredentials: true } заставляет браузер 
-   * прикрепить к этому запросу нашу HttpOnly куку refresh_token!
-   */
+  getMe(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.API_URL}/me`).pipe(
+      tap((user) => {
+        this._currentUser.set(user);
+      })
+    );
+  }
+
   refreshToken(): Observable<AuthResponse> {
-    const refresh$ = this.http.post<AuthResponse>(`${this.API_URL}/refresh`, {}, { withCredentials: true });
+    const refresh$ = this.http.post<AuthResponse>(`${this.API_URL}/refresh`, {});
     return this.handleAuthResponse(refresh$);
   }
 
-  /**
-   * 4. Выход (Пока локальный)
-   */
-  logout(): void {
-    // Отправляем запрос на бэкенд, чтобы удалить сессию из БД и стереть куку.
-    // withCredentials обязателен, чтобы браузер отдал куку refresh_token бэкенду!
-    this.http.post(`${this.API_URL}/logout`, {}, { withCredentials: true }).subscribe({
-      next: () => console.log('Сессия успешно удалена на бэкенде'),
-      error: (err) => console.error('Ошибка при удалении сессии:', err)
-    });
-
-    // Независимо от ответа сети, мгновенно чистим фронтенд, чтобы не мариновать юзера
-    localStorage.removeItem('access_token');
-    this._accessToken.set(null);
+  private executeLocalLogout(): void {
+    this.wsManager.disconnect();
+    this.logoutSource$.next();
+    this.clearLocalSession();
+    this.redirectToLogin();
+    console.log('logoudttt');
+    
   }
 
-  logoutAll(): void {
-    // Делаем запрос к защищенному эндпоинту. 
-    // Интерцептор автоматически прикрепит Bearer токен, а withCredentials отдаст куку
-    this.http.post(`${this.API_URL}/logout-all`, {}, { withCredentials: true }).subscribe({
-      next: () => console.log('Все сессии успешно аннулированы в базе данных'),
-      error: (err) => console.error('Ошибка при выходе со всех устройств:', err)
-    });
+  logout(): Observable<any> {
+    return this.http.post(`${this.API_URL}/logout`, {}).pipe(
+      finalize(() => this.executeLocalLogout())
+    );
+  }
 
-    // Мгновенно зачищаем локальное хранилище текущего устройства
+  logoutAllDevices(): Observable<any> {
+    return this.http.post(`${this.API_URL}/logout-all`, {}).pipe(
+      finalize(() => this.executeLocalLogout())
+    );
+  }
+
+  /**
+   * Метод принудительного редиректа на страницу авторизации
+   */
+  public redirectToLogin(): void {
+    this.router.navigate(['/login']);
+  }
+
+  private clearLocalSession(): void {
     localStorage.removeItem('access_token');
     this._accessToken.set(null);
+    this._currentUser.set(null);
   }
 }

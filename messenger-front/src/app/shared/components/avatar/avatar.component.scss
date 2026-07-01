@@ -1,0 +1,36 @@
+.avatar-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  /* Яркие градиенты, чтобы оживить интерфейс */
+  background: linear-gradient(135deg, #ff9500 0%, #ff5e3a 100%); 
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  user-select: none;
+  position: relative;
+}
+
+.avatar.group-avatar {
+  background: linear-gradient(135deg, #5ac8fa 0%, #007aff 100%); /* Сине-голубой градиент для групп */
+}
+
+.online-badge {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  background-color: #34c759; /* Ярко-зеленый онлайн */
+  border: 2px solid #ffffff; /* Белая обводка, чтобы не сливалось */
+  border-radius: 50%;
+}

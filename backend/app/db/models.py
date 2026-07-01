@@ -12,7 +12,7 @@ from sqlalchemy import (
     Enum,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 from sqlalchemy.sql import func
 
@@ -58,11 +58,14 @@ class User(Base):
         onupdate=func.now(),  # База будет сама обновлять время при любом апдейте юзера
     )
 
+    chat_members = relationship("ChatMember", back_populates="user")
+
+
 class UserSession(Base):
     __tablename__ = "user_sessions"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", on_delete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Сам refresh-токен (хэшировать не обязательно, но это уникальная строка)
     refresh_token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False)
@@ -100,6 +103,8 @@ class Chat(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
+    members = relationship("ChatMember", back_populates="chat", lazy="selectin")
+
 
 # ==========================================
 # 3. УЧАСТНИКИ ЧАТОВ
@@ -117,6 +122,9 @@ class ChatMember(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+    chat = relationship("Chat", back_populates="members")
+    user = relationship("User", back_populates="chat_members", lazy="selectin")
 
     __table_args__ = (UniqueConstraint("user_id", "chat_id", name="uq_user_chat"),)
 
@@ -147,7 +155,7 @@ class Message(Base):
         DateTime(timezone=True), server_default=func.now(), index=True
     )
 
-    reply_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("messages.id", on_delete="SET NULL"), nullable=True, index=True)
+    reply_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("messages.id", ondelete="SET NULL"), nullable=True, index=True)
 
 
 # ==========================================

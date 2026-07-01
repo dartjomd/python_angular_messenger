@@ -1,8 +1,38 @@
-<div class="page-layout">
-  <main class="content-area">
-    <div class="empty-state">
-      <div class="icon">📭</div>
-      <p class="message">У вас нет диалогов</p>
+<div class="chat-list-container">
+  <div class="search-header">
+    <input type="text" placeholder="Поиск чатов и групп..." class="search-input" />
+  </div>
+
+  <div class="chats-scroll-area">
+
+    @for (chat of chats(); track chat.id) {
+    <div class="chat-item" (click)="selectChat(chat.id)">
+
+      <app-avatar [avatarText]="chat.avatar_letter" [isOnline]="chat.chat_type === 'DIRECT' && chat.is_online"
+        [isGroup]="chat.chat_type === 'GROUP'">
+      </app-avatar>
+
+      <div class="chat-info">
+        <div class="chat-top-row">
+          <h4 class="chat-title">{{ chat.username }}</h4>
+          <span class="chat-time">{{ chat.last_message_time | date:'HH:mm' }}</span>
+        </div>
+        <div class="chat-bottom-row">
+          <p class="last-message">{{ chat.last_message }}</p>
+
+          @if (chat.unread_count > 0) {
+          <span class="unread-badge">
+            {{ chat.unread_count }}
+          </span>
+          }
+        </div>
+      </div>
     </div>
-  </main>
+    } @empty {
+    <div class="empty-chats">
+      <p>У вас пока нет активных чатов 👥</p>
+    </div>
+    }
+
+  </div>
 </div>

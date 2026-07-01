@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
+from typing import List
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import delete, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,9 +13,10 @@ from app.responses import (
     REFRESH_RESPONSES,
     REGISTRATION_RESPONSES,
 )  # <-- Импортируем словари
+from app.config import settings
 from app.db.database import get_db
 from app.db.models import User, UserSession
-from app.schemas import Token, UserCreate, UserLogin, UserResponse
+from app.schemas import LogoutResponse, RefreshResponse, Token, UserCreate, UserLogin, UserResponse, UserSearchResponse
 from app.security import (
     create_access_token,
     decode_refresh_token,
@@ -25,6 +27,10 @@ from app.security import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+# Cookie settings from app configuration
+COOKIE_SECURE = settings.COOKIE_SECURE
+COOKIE_SAMESITE = settings.COOKIE_SAMESITE
 
 # --- ПЕРЕИСПОЛЬЗУЕМЫЕ ИСКЛЮЧЕНИЯ ---
 
@@ -86,7 +92,6 @@ async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-
     return new_user
 
 
@@ -143,16 +148,20 @@ async def login(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=30 * 24 * 60 * 60,
     )
 
     # Возвращаем access_token для Swagger/Фронтенда
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user,  # Pydantic сам смапит модель SQLAlchemy (User) в схему UserProfile
+    }
 
 
-@router.post("/refresh", response_model=Token, responses=REFRESH_RESPONSES)
+@router.post("/refresh", response_model=RefreshResponse, responses=REFRESH_RESPONSES)
 async def refresh_tokens(
     request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ):
@@ -176,21 +185,28 @@ async def refresh_tokens(
             if user_id and session_id:
                 # 🛠️ ИСПРАВЛЕНИЕ: Преобразуем строку в uuid.UUID вместо int!
                 session_uuid = uuid.UUID(session_id)
-                
+
                 check_query = select(UserSession).where(UserSession.id == session_uuid)
                 check_result = await db.execute(check_query)
                 existing_session = check_result.scalar_one_or_none()
 
                 if existing_session:
                     # Тут user_id у тебя в модели остался int, так что его можно оставить как int(user_id)
-                    alert_query = delete(UserSession).where(UserSession.user_id == int(user_id))
+                    alert_query = delete(UserSession).where(
+                        UserSession.user_id == int(user_id)
+                    )
                     await db.execute(alert_query)
                     await db.commit()
-                    
-                    response.delete_cookie("refresh_token", httponly=True, secure=True, samesite="lax")
+
+                    response.delete_cookie(
+                        "refresh_token",
+                        httponly=True,
+                        secure=COOKIE_SECURE,
+                        samesite=COOKIE_SAMESITE,
+                    )
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Атака обнаружена! Повторное использование токена. Все сессии сброшены."
+                        detail="Атака обнаружена! Повторное использование токена. Все сессии сброшены.",
                     )
             raise refresh_exception
 
@@ -231,15 +247,15 @@ async def refresh_tokens(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=True,
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=30 * 24 * 60 * 60,
     )
 
     return {"access_token": new_access_token, "token_type": "bearer"}
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=LogoutResponse)
 async def logout(
     request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ):
@@ -260,13 +276,16 @@ async def logout(
     # Метод delete_cookie просто ставит дату протухания куки в прошлое,
     # и браузер моментально её уничтожает.
     response.delete_cookie(
-        key="refresh_token", httponly=True, secure=True, samesite="lax"
+        key="refresh_token",
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
     )
 
     return {"detail": "Успешный выход из системы"}
 
 
-@router.post("/logout-all")
+@router.post("/logout-all", response_model=LogoutResponse)
 async def logout_from_all_devices(
     response: Response,
     current_user: User = Depends(
@@ -286,7 +305,14 @@ async def logout_from_all_devices(
     # 3. Стираем куку refresh_token на текущем устройстве,
     # чтобы у пользователя сразу очистился браузер
     response.delete_cookie(
-        key="refresh_token", httponly=True, secure=True, samesite="lax"
+        key="refresh_token",
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
     )
 
     return {"detail": "Успешный выход со всех устройств. Все сессии аннулированы."}
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
